@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <!-- 日志存储目录 -->
+        <Property name="LOG_HOME">logs</Property>
+        <!-- 日志文件名称格式 -->
+        <Property name="FILE_NAME">order-service</Property>
+        <!-- 日志格式模板 -->
+        <Property name="PATTERN_LAYOUT">%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId}] - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- 控制台输出 -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${PATTERN_LAYOUT}"/>
+            <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+        </Console>
+
+        <!-- 所有日志 -->
+        <RollingRandomAccessFile name="AllFile"
+                                 fileName="${LOG_HOME}/${FILE_NAME}.log"
+                                 filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME}-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${PATTERN_LAYOUT}"/>
+            <Policies>
+                <!-- 每天生成一个日志文件 -->
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <!-- 单个文件大小限制 -->
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <!-- 最多保留30个文件 -->
+            <DefaultRolloverStrategy max="30"/>
+        </RollingRandomAccessFile>
+
+        <!-- 错误日志单独记录 -->
+        <RollingRandomAccessFile name="ErrorFile"
+                                 fileName="${LOG_HOME}/${FILE_NAME}-error.log"
+                                 filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME}-error-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${PATTERN_LAYOUT}"/>
+            <ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="DENY"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingRandomAccessFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- 异步记录器配置 -->
+        <AsyncRoot level="info" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AllFile"/>
+            <AppenderRef ref="ErrorFile"/>
+        </AsyncRoot>
+        
+        <!-- 自定义包日志级别 -->
+        <AsyncLogger name="com.lingfeng.order" level="debug" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AllFile"/>
+            <AppenderRef ref="ErrorFile"/>
+        </AsyncLogger>
+        
+        <!-- 第三方框架日志级别 -->
+        <AsyncLogger name="org.springframework" level="info" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AllFile"/>
+        </AsyncLogger>
+        
+        <!-- SQL日志 -->
+        <AsyncLogger name="org.hibernate.SQL" level="debug" additivity="false" includeLocation="true">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AllFile"/>
+        </AsyncLogger>
+    </Loggers>
+</Configuration>
